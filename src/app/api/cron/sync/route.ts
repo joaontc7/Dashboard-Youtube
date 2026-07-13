@@ -6,7 +6,6 @@ import { getChannelData, getVideosPage, getVideoComments } from "../../../lib/yo
 
 export const maxDuration = 60; // Permite que a Vercel rode esse script por mais tempo se necessário
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(req: Request) {
   try {
@@ -87,6 +86,7 @@ export async function GET(req: Request) {
     if (newCommentsFound.length > 0) {
       const whitelist = process.env.WHITELIST_EMAILS?.split(",").filter(Boolean) || [];
       if (whitelist.length > 0 && process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
         
         const htmlBody = `
           <h2>Você tem ${newCommentsFound.length} novos comentários!</h2>
