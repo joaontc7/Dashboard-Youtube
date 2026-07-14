@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
     // Disabling build-time checks avoids Vercel's stricter TS version breaking the deploy.
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Same rationale: lint locally, don't block production builds.
-    ignoreDuringBuilds: true,
-  },
 };
 
 export default nextConfig;
