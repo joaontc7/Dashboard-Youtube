@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     });
 
     // 2.1 Salvar os novos comentários no banco como PENDENTES
-    const missingIds = commentIds.filter((id: string) => !statuses.find(s => s.youtubeCommentId === id));
+    const missingIds = commentIds.filter((id: string) => !statuses.find((s: { youtubeCommentId: string }) => s.youtubeCommentId === id));
     if (missingIds.length > 0) {
       await prisma.commentStatus.createMany({
         data: missingIds.map((id: string) => ({
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
     // 3. Merge
     const mergedComments = comments.map((c: any) => {
       const id = c.snippet?.topLevelComment?.id;
-      const statusObj = statuses.find(s => s.youtubeCommentId === id);
+      const statusObj = statuses.find((s: { youtubeCommentId: string }) => s.youtubeCommentId === id);
       return {
         ...c,
         localStatus: statusObj?.status || "PENDENTE",

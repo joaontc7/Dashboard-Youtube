@@ -30,10 +30,10 @@ export async function GET(req: Request) {
 
     const videosWithStatus = data.videos.map((v: any) => {
       const vid = v.snippet?.resourceId?.videoId;
-      const vStatuses = statuses.filter(s => s.videoId === vid);
+      const vStatuses = statuses.filter((s: { videoId: string; status: string }) => s.videoId === vid);
       const totalYoutubeComments = parseInt(v.details?.commentCount || "0");
       const ourStatusesCount = vStatuses.length;
-      const verifiedCount = vStatuses.filter(s => s.status === "VERIFICADO" || s.status === "RESPONDIDO").length;
+      const verifiedCount = vStatuses.filter((s: { videoId: string; status: string }) => s.status === "VERIFICADO" || s.status === "RESPONDIDO").length;
       
       let border = "clear";
       if (totalYoutubeComments > 0) {
