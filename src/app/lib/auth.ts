@@ -18,9 +18,13 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      const whitelist = process.env.WHITELIST_EMAILS?.split(",") || [];
-      if (whitelist.length === 0) return false;
-      return whitelist.includes(user.email || "");
+      const whitelist = process.env.WHITELIST_EMAILS?.split(",").map(e => e.trim().toLowerCase()) || [];
+      const userEmail = user.email?.trim().toLowerCase() || "";
+      console.log(`[NextAuth] SignIn Attempt: ${userEmail}`);
+      console.log(`[NextAuth] Whitelist:`, whitelist);
+      const isAllowed = whitelist.includes(userEmail);
+      console.log(`[NextAuth] Access: ${isAllowed ? 'GRANTED' : 'DENIED'}`);
+      return isAllowed;
     },
     async session({ session, token }) {
       (session as any).accessToken = token.accessToken;
