@@ -1,24 +1,31 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../lib/db";
 
 export async function GET() {
   try {
-    const leadCount = await prisma.lead.count();
-    const templateCount = await prisma.template.count();
-    const commentStatusCount = await prisma.commentStatus.count();
+    const tursoUrl = process.env.TURSO_DATABASE_URL;
+    const tursoToken = process.env.TURSO_AUTH_TOKEN;
     
-    return NextResponse.json({ 
-      status: "OK", 
-      leadCount, 
-      templateCount,
-      commentStatusCount,
-      message: "Prisma funciona!" 
+    return NextResponse.json({
+      status: "DIAGNOSTICS",
+      tursoUrl: {
+        valueType: typeof tursoUrl,
+        valueString: tursoUrl,
+        length: tursoUrl ? tursoUrl.length : 0,
+        isUndefinedString: tursoUrl === "undefined",
+        isNullString: tursoUrl === "null",
+      },
+      tursoToken: {
+        valueType: typeof tursoToken,
+        length: tursoToken ? tursoToken.length : 0,
+        isUndefinedString: tursoToken === "undefined",
+        isNullString: tursoToken === "null",
+      }
     });
   } catch (error: any) {
     return NextResponse.json({ 
       status: "ERROR", 
-      error: error.message,
-      stack: error.stack?.split("\n").slice(0, 5)
+      error: error.message
     }, { status: 500 });
   }
 }
+
