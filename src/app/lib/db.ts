@@ -5,10 +5,17 @@ import { PrismaLibSql } from "@prisma/adapter-libsql";
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  console.log(`[DB Init] Initializing Prisma with adapter. URL exists: ${!!url}, AuthToken exists: ${!!authToken}`);
+  if (url) {
+    console.log(`[DB Init] URL starts with: ${url.substring(0, 15)}...`);
+  }
+  
   const adapter = new PrismaLibSql(
     createClient({
-      url: process.env.TURSO_DATABASE_URL || "file:./dev.db",
-      authToken: process.env.TURSO_AUTH_TOKEN,
+      url: url || "file:./dev.db",
+      authToken: authToken,
     }) as any
   );
   return new PrismaClient({ adapter });
