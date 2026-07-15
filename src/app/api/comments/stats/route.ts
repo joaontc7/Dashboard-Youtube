@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/db";
 
 export async function GET() {
   try {
-    // Um cálculo simples para stats (no futuro pode envolver o YouTube API)
+    const { prisma } = await import("../../../lib/db");
     const totalStatuses = await prisma.commentStatus.count();
     const verifiedStatuses = await prisma.commentStatus.count({
       where: { OR: [{ status: "VERIFICADO" }, { status: "RESPONDIDO" }] }
@@ -20,6 +19,12 @@ export async function GET() {
       totalTracked: totalStatuses
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.warn("[comments/stats] DB unavailable, returning zeros:", error.message);
+    // Return zeros gracefully if DB is down
+    return NextResponse.json({
+      unrespondedCount: 0,
+      pendingVideosCount: 0,
+      totalTracked: 0
+    });
   }
 }

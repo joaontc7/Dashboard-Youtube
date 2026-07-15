@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
-import { prisma } from "../../../lib/db";
 import { getVideoComments } from "../../../lib/youtube";
 
 export async function GET(req: Request) {
@@ -28,37 +27,55 @@ export async function GET(req: Request) {
     const comments = ytData.items || [];
     const commentIds = comments.map((c: any) => c.snippet?.topLevelComment?.id).filter(Boolean);
 
-    // 2. Fetch statuses from Prisma
-    let statuses = await prisma.commentStatus.findMany({
-      where: { youtubeCommentId: { in: commentIds } }
-    });
+    // 2. Try to fetch statuses from DB (optional - DB may not be available)
+    let statusMap: Record<string, { status: string; verifiedBy?: string; verifiedAt?: Date }> = {};
+    try {
+      const { prisma } = await import("../../../lib/db");
+      const statuses = await prisma.commentStatus.findMany({
+        where: { youtubeCommentId: { in: commentIds } }
+      });
 
-    // 2.1 Salvar os novos comentários no banco como PENDENTES
-    const missingIds = commentIds.filter((id: string) => !statuses.find((s: { youtubeCommentId: string }) => s.youtubeCommentId === id));
-    if (missingIds.length > 0) {
-      await prisma.commentStatus.createMany({
-        data: missingIds.map((id: string) => ({
-          youtubeCommentId: id,
-          videoId: videoId,
-          status: "PENDENTE"
-        }))
+      // Try to save new comments as PENDENTE
+      const existingIds = new Set(statuses.map((s: any) => s.youtubeCommentId));
+      const missingIds = commentIds.filter((id: string) => !existingIds.has(id));
+      if (missingIds.length > 0) {
+        await prisma.commentStatus.createMany({
+          data: missingIds.map((id: string) => ({
+            youtubeCommentId: id,
+            videoId: videoId,
+            status: "PENDENTE"
+          }))
+        });
+      }
+
+      // Build status map
+      statuses.forEach((s: any) => {
+        statusMap[s.youtubeCommentId] = {
+          status: s.status,
+          verifiedBy: s.verifiedBy,
+          verifiedAt: s.verifiedAt,
+        };
       });
-      // Atualiza a lista de statuses com os que acabamos de criar
-      const newStatuses = await prisma.commentStatus.findMany({
-        where: { youtubeCommentId: { in: missingIds } }
+      missingIds.forEach((id: string) => {
+        statusMap[id] = { status: "PENDENTE" };
       });
-      statuses = [...statuses, ...newStatuses];
+    } catch (dbErr) {
+      console.warn("[comments/list] DB unavailable, returning YouTube data without statuses:", (dbErr as Error).message);
+      // All comments will show as PENDENTE without DB
+      commentIds.forEach((id: string) => {
+        statusMap[id] = { status: "PENDENTE" };
+      });
     }
 
-    // 3. Merge
+    // 3. Merge YouTube data with statuses
     const mergedComments = comments.map((c: any) => {
       const id = c.snippet?.topLevelComment?.id;
-      const statusObj = statuses.find((s: { youtubeCommentId: string }) => s.youtubeCommentId === id);
+      const statusObj = statusMap[id] || { status: "PENDENTE" };
       return {
         ...c,
-        localStatus: statusObj?.status || "PENDENTE",
-        verifiedBy: statusObj?.verifiedBy || null,
-        verifiedAt: statusObj?.verifiedAt || null,
+        localStatus: statusObj.status,
+        verifiedBy: statusObj.verifiedBy || null,
+        verifiedAt: statusObj.verifiedAt || null,
       };
     });
 

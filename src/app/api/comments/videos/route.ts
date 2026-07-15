@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
-import { prisma } from "../../../lib/db";
 import { getChannelData, getVideosPage } from "../../../lib/youtube";
 
 export async function GET(req: Request) {
@@ -22,36 +21,44 @@ export async function GET(req: Request) {
 
     const data = await getVideosPage(accessToken, uploadsPlaylistId, pageToken || undefined, 20);
     
-    // Agora buscar os status do prisma para esses vídeos
-    const videoIds = data.videos.map((v: any) => v.snippet?.resourceId?.videoId).filter(Boolean);
-    const statuses = await prisma.commentStatus.findMany({
-      where: { videoId: { in: videoIds } }
-    });
+    // Try to enrich with DB statuses (optional)
+    let videosWithStatus = data.videos.map((v: any) => ({ ...v, statusBorder: "clear", localVerifiedCount: 0 }));
+    
+    try {
+      const { prisma } = await import("../../../lib/db");
+      const videoIds = data.videos.map((v: any) => v.snippet?.resourceId?.videoId).filter(Boolean);
+      const statuses = await prisma.commentStatus.findMany({
+        where: { videoId: { in: videoIds } }
+      });
 
-    const videosWithStatus = data.videos.map((v: any) => {
-      const vid = v.snippet?.resourceId?.videoId;
-      const vStatuses = statuses.filter((s: { videoId: string; status: string }) => s.videoId === vid);
-      const totalYoutubeComments = parseInt(v.details?.commentCount || "0");
-      const ourStatusesCount = vStatuses.length;
-      const verifiedCount = vStatuses.filter((s: { videoId: string; status: string }) => s.status === "VERIFICADO" || s.status === "RESPONDIDO").length;
-      
-      let border = "clear";
-      if (totalYoutubeComments > 0) {
-        if (ourStatusesCount < totalYoutubeComments) {
-          border = "red";
-        } else if (verifiedCount < totalYoutubeComments) {
-          border = "yellow";
-        } else {
-          border = "green";
+      videosWithStatus = data.videos.map((v: any) => {
+        const vid = v.snippet?.resourceId?.videoId;
+        const vStatuses = statuses.filter((s: any) => s.videoId === vid);
+        const totalYoutubeComments = parseInt(v.details?.commentCount || "0");
+        const ourStatusesCount = vStatuses.length;
+        const verifiedCount = vStatuses.filter((s: any) => s.status === "VERIFICADO" || s.status === "RESPONDIDO").length;
+        
+        let border = "clear";
+        if (totalYoutubeComments > 0) {
+          if (ourStatusesCount < totalYoutubeComments) {
+            border = "red";
+          } else if (verifiedCount < totalYoutubeComments) {
+            border = "yellow";
+          } else {
+            border = "green";
+          }
         }
-      }
 
-      return {
-        ...v,
-        statusBorder: border,
-        localVerifiedCount: verifiedCount,
-      };
-    });
+        return {
+          ...v,
+          statusBorder: border,
+          localVerifiedCount: verifiedCount,
+        };
+      });
+    } catch (dbErr) {
+      console.warn("[comments/videos] DB unavailable, returning videos without statuses:", (dbErr as Error).message);
+      // Keep videosWithStatus as defaulted above (all "clear" borders)
+    }
 
     return NextResponse.json({ videos: videosWithStatus, nextPageToken: data.nextPageToken });
   } catch (error: any) {

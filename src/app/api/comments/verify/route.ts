@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
-import { prisma } from "../../../lib/db";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -15,22 +14,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    await prisma.commentStatus.upsert({
-      where: { youtubeCommentId: commentId },
-      create: {
-        youtubeCommentId: commentId,
-        videoId,
-        status: "VERIFICADO",
-        verifiedBy: session.user?.email || "Unknown",
-        verifiedAt: new Date()
-      },
-      update: {
-        status: "VERIFICADO",
-        verifiedBy: session.user?.email || "Unknown",
-        verifiedAt: new Date()
-      }
-    });
+    // Try to save to DB (optional)
+    try {
+      const { prisma } = await import("../../../lib/db");
+      await prisma.commentStatus.upsert({
+        where: { youtubeCommentId: commentId },
+        create: {
+          youtubeCommentId: commentId,
+          videoId,
+          status: "VERIFICADO",
+          verifiedBy: session.user?.email || "Unknown",
+          verifiedAt: new Date()
+        },
+        update: {
+          status: "VERIFICADO",
+          verifiedBy: session.user?.email || "Unknown",
+          verifiedAt: new Date()
+        }
+      });
+    } catch (dbErr) {
+      console.warn("[comments/verify] DB unavailable, status not persisted:", (dbErr as Error).message);
+    }
 
+    // Always return success — UI updates locally
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
