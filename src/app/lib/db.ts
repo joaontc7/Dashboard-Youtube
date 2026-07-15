@@ -7,13 +7,13 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 function createPrismaClient() {
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
-  console.log(`[Runtime DB Init] URL exists: ${!!url}, Type: ${typeof url}, Length: ${url ? url.length : 0}, Value: ${url ? url.substring(0, 15) + "..." : "none"}`);
-  console.log(`[Runtime DB Init] Token exists: ${!!authToken}, Type: ${typeof authToken}, Length: ${authToken ? authToken.length : 0}`);
   
-  if (!url) {
-    console.error("[Runtime DB Init] ERROR: TURSO_DATABASE_URL is undefined or empty!");
-  }
+  // Set DATABASE_URL programmatically so that Prisma 7's engine
+  // validation doesn't throw "URL_INVALID: The URL 'undefined' is not in a valid format"
+  process.env.DATABASE_URL = url || "file:./dev.db";
 
+  console.log(`[Runtime DB Init] Setting process.env.DATABASE_URL. URL exists: ${!!url}`);
+  
   const adapter = new PrismaLibSql(
     createClient({
       url: url || "file:./dev.db",
