@@ -8,9 +8,9 @@ function createPrismaClient() {
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
   
-  // Set DATABASE_URL programmatically so that Prisma 7's engine
-  // validation doesn't throw "URL_INVALID: The URL 'undefined' is not in a valid format"
-  process.env.DATABASE_URL = url || "file:./dev.db";
+  // Set DATABASE_URL programmatically to a dummy sqlite file so that Prisma 7's engine
+  // validation passes (since it expects file: or sqlite: provider), while we use the driver adapter.
+  process.env.DATABASE_URL = "file:./dev.db";
 
   console.log(`[Runtime DB Init] Setting process.env.DATABASE_URL. URL exists: ${!!url}`);
   
