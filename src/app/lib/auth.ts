@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "./db";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -35,7 +36,6 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         if (account.refresh_token) {
           // Salvar refresh_token no banco para uso em background
-          const { prisma } = require("./db");
           await prisma.systemConfig.upsert({
             where: { key: "google_refresh_token" },
             update: { value: account.refresh_token },
