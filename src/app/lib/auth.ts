@@ -1,6 +1,5 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "./db";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -36,11 +35,18 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         if (account.refresh_token) {
           // Salvar refresh_token no banco para uso em background
-          await prisma.systemConfig.upsert({
-            where: { key: "google_refresh_token" },
-            update: { value: account.refresh_token },
-            create: { key: "google_refresh_token", value: account.refresh_token },
-          });
+          // Envolvido em try/catch para NUNCA bloquear o login
+          try {
+            const { prisma } = await import("./db");
+            await prisma.systemConfig.upsert({
+              where: { key: "google_refresh_token" },
+              update: { value: account.refresh_token },
+              create: { key: "google_refresh_token", value: account.refresh_token },
+            });
+            console.log("[NextAuth] Refresh token saved to DB successfully");
+          } catch (err) {
+            console.warn("[NextAuth] Could not save refresh token to DB (login continues):", (err as Error).message);
+          }
         }
       }
       return token;
