@@ -20,6 +20,8 @@ export async function GET() {
     return NextResponse.json({ 
       status: "ERROR", 
       error: error.message,
+      debugUrl: process.env.TURSO_DATABASE_URL,
+      debugType: typeof process.env.TURSO_DATABASE_URL,
       stack: error.stack?.split("\n").slice(0, 5)
     }, { status: 500 });
   }
