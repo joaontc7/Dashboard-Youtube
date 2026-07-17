@@ -9,14 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@libsql/client": "0.8.1",
-    "@prisma/adapter-libsql": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@libsql/client": "0.6.0",
+    "@prisma/adapter-libsql": "5.14.0",
+    "@prisma/client": "5.14.0",
     "dotenv": "^17.4.2",
     "googleapis": "^173.0.0",
     "next": "16.2.10",
     "next-auth": "^4.24.14",
-    "prisma": "^7.8.0",
+    "prisma": "5.14.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.9.2",

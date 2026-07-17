@@ -7,29 +7,29 @@ import { PrismaLibSql } from "@prisma/adapter-libsql";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-function createPrismaClient() {
-  let url = process.env["TURSO_DATABASE_URL"];
-  if (url === "undefined" || url === "null" || !url) {
-    url = "file:./dev.db";
-  }
-  
-  let authToken = process.env["TURSO_AUTH_TOKEN"];
-  if (authToken === "undefined" || authToken === "null") {
-    authToken = undefined;
-  }
+export const prisma =
+  globalForPrisma.prisma ||
+  (() => {
+    let url = process.env["TURSO_DATABASE_URL"];
+    if (url === "undefined" || url === "null" || !url) {
+      url = "file:./dev.db";
+    }
 
-  console.log(`[Runtime DB Init] Using URL: ${url}`);
+    let authToken = process.env["TURSO_AUTH_TOKEN"];
+    if (authToken === "undefined" || authToken === "null") {
+      authToken = undefined;
+    }
 
-  const adapter = new PrismaLibSql(
-    createClient({
-      url: url || "file:./dev.db",
-      authToken: authToken,
-    }) as any
-  );
-  return new PrismaClient({ adapter });
-}
+    console.log(`[Runtime DB Init] Using URL: ${url}`);
 
-export const prisma = globalForPrisma.prisma || createPrismaClient();
+    const libsql = createClient({
+      url,
+      authToken,
+    });
+
+    const adapter = new PrismaLibSql(libsql);
+    return new PrismaClient({ adapter });
+  })();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
