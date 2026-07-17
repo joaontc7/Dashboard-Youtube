@@ -10,7 +10,7 @@ export async function getChannelData(accessToken: string) {
   const youtube = getYouTubeClient(accessToken);
   const channelRes = await youtube.channels.list({
     part: ["contentDetails", "statistics", "snippet"],
-    id: [process.env.YOUTUBE_CHANNEL_ID || ""],
+    mine: true,
   });
 
   if (!channelRes.data.items || channelRes.data.items.length === 0) {
