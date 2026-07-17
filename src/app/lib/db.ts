@@ -3,7 +3,7 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || "file:./dev.db";
 
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "@libsql/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
@@ -27,7 +27,7 @@ export const prisma =
       authToken,
     });
 
-    const adapter = new PrismaLibSql(libsql);
+    const adapter = new PrismaLibSQL(libsql);
     return new PrismaClient({ adapter });
   })();
 
