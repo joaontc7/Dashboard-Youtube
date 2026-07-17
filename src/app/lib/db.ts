@@ -20,7 +20,7 @@ function createPrismaClient() {
       authToken: authToken,
     }) as any
   );
-  return new PrismaClient({ adapter, datasourceUrl: "file:./dev.db" });
+  return new PrismaClient({ adapter });
 }
 
 export const prisma = globalForPrisma.prisma || createPrismaClient();
