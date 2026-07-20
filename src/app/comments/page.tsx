@@ -1,14 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import TemplateModal from "../components/TemplateModal";
 
 export default function CommentsOverview() {
   const [stats, setStats] = useState({ unrespondedCount: 0, pendingVideosCount: 0, totalTracked: 0 });
   const [videos, setVideos] = useState<any[]>([]);
   const [nextPageToken, setNextPageToken] = useState("");
   const [loading, setLoading] = useState(true);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -41,15 +39,9 @@ export default function CommentsOverview() {
 
   return (
     <div>
-      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1 className="page-title">Gestão de <span>Comentários</span></h1>
-          <p className="page-subtitle">Acompanhe métricas, templates e gerencie comentários por vídeo.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setIsTemplateModalOpen(true)}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Templates
-        </button>
+      <div className="page-header">
+        <h1 className="page-title">Gestão de <span>Comentários</span></h1>
+        <p className="page-subtitle">Acompanhe os comentários de cada vídeo e responda diretamente no YouTube.</p>
       </div>
 
       <div className="stat-grid" style={{ marginBottom: "30px" }}>
@@ -117,7 +109,7 @@ export default function CommentsOverview() {
         )}
       </div>
 
-      <TemplateModal isOpen={isTemplateModalOpen} onClose={() => setIsTemplateModalOpen(false)} />
+
     </div>
   );
 }
