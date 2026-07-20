@@ -20,6 +20,11 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const resStats = await fetch("/api/dashboard/stats");
+      if (resStats.status === 401) {
+        alert("Sua sessão do Google expirou (ou você não está logado). Por favor, saia e entre novamente no sistema para renovar a conexão com o YouTube.");
+        window.location.href = "/api/auth/signin";
+        return;
+      }
       if (resStats.ok) setStats(await resStats.json());
       
       const resLeads = await fetch("/api/leads");

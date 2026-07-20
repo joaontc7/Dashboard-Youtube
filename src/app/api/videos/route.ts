@@ -5,7 +5,7 @@ import { getVideosPage } from "../../lib/youtube";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !(session as any).accessToken) {
+  if (!session || !(session as any).accessToken || (session as any).error === "RefreshAccessTokenError") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

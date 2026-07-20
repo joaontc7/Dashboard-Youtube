@@ -6,7 +6,7 @@ import { prisma } from "../../../lib/db";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session || !(session as any).accessToken) {
+  if (!session || !(session as any).accessToken || (session as any).error === "RefreshAccessTokenError") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
