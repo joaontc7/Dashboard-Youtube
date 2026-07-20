@@ -28,13 +28,51 @@ export default function CommentsOverview() {
       const res = await fetch(`/api/comments/videos${token ? `?pageToken=${token}` : ""}`);
       if (res.ok) {
         const data = await res.json();
-        setVideos(prev => token ? [...prev, ...data.videos] : data.videos);
+        const loadedVideos = data.videos || [];
+        setVideos(prev => token ? [...prev, ...loadedVideos] : loadedVideos);
         setNextPageToken(data.nextPageToken || "");
+
+        // Sync the loaded videos in the background
+        if (loadedVideos.length > 0) {
+          const videoIds = loadedVideos.map((v: any) => v.snippet?.resourceId?.videoId).filter(Boolean);
+          triggerSync(videoIds, token);
+        }
       }
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
+  };
+
+  const triggerSync = async (videoIds: string[], token?: string) => {
+    try {
+      const res = await fetch("/api/comments/sync-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoIds }),
+      });
+      if (res.ok) {
+        // Quietly refresh stats
+        loadStats();
+        // Quietly refresh videos data to show correct counts/borders
+        const resVids = await fetch(`/api/comments/videos${token ? `?pageToken=${token}` : ""}`);
+        if (resVids.ok) {
+          const dataVids = await resVids.json();
+          const syncedVideos = dataVids.videos || [];
+          setVideos(prev => {
+            if (token) {
+              // Replace the newly added items with their synced versions
+              const prevSynced = prev.slice(0, prev.length - syncedVideos.length);
+              return [...prevSynced, ...syncedVideos];
+            } else {
+              return syncedVideos;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Background sync failed:", e);
+    }
   };
 
   return (

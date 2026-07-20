@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 export default function DebugPage() {
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadStatus();
@@ -20,6 +21,24 @@ export default function DebugPage() {
     setLoading(false);
   };
 
+  const handleSyncAll = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/debug/sync-all", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Sincronização concluída com sucesso! ${data.videosCount} vídeos processados e ${data.commentsSynced} status de comentários atualizados.`);
+        loadStatus();
+      } else {
+        alert("Falha na sincronização.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao sincronizar.");
+    }
+    setSyncing(false);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -28,7 +47,7 @@ export default function DebugPage() {
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <button className="btn btn-ghost" onClick={loadStatus} disabled={loading}>
+        <button className="btn btn-ghost" onClick={loadStatus} disabled={loading || syncing}>
           {loading ? "Atualizando..." : "Atualizar Status"}
         </button>
       </div>
@@ -40,7 +59,7 @@ export default function DebugPage() {
           
           <div className="card" style={{ background: "#161616", border: "1px solid #333" }}>
             <h3 style={{ color: "var(--accent)", marginBottom: "15px" }}>Status da API (YouTube)</h3>
-            <div style={{ fontFamily: "monospace", fontSize: "13px", color: status.api.youtube.includes("Conectado") ? "var(--success)" : "var(--danger)", background: "#222", padding: "10px", borderRadius: "4px" }}>
+            <div style={{ fontFamily: "monospace", fontSize: "13px", color: status.api.youtube.includes("Conectado") ? "var(--success)" : "var(--error)", background: "#222", padding: "10px", borderRadius: "4px" }}>
               {status.api.youtube}
             </div>
           </div>
@@ -66,7 +85,9 @@ export default function DebugPage() {
           <div className="card" style={{ background: "#161616", border: "1px solid #333" }}>
             <h3 style={{ color: "var(--accent)", marginBottom: "15px" }}>Ações do Sistema</h3>
             <div style={{ display: "flex", gap: "15px" }}>
-              <button className="btn btn-secondary" onClick={() => alert("Função em desenvolvimento")} style={{ flex: 1 }}>Forçar Sincronização Total</button>
+              <button className="btn btn-secondary" onClick={handleSyncAll} disabled={syncing} style={{ flex: 1 }}>
+                {syncing ? "Sincronizando Histórico..." : "Forçar Sincronização Total"}
+              </button>
               <button className="btn btn-danger" onClick={() => alert("Função em desenvolvimento")} style={{ flex: 1 }}>Limpar Cache de Vídeos</button>
             </div>
           </div>
