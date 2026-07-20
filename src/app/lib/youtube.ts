@@ -8,9 +8,10 @@ export function getYouTubeClient(accessToken: string) {
 
 export async function getChannelData(accessToken: string) {
   const youtube = getYouTubeClient(accessToken);
+  const CHANNEL_ID = "UCfIHSZPt-yQ5foOm7NscflQ"; // Luiz Paulo Araújo (@luizpaulo_arjs)
   const channelRes = await youtube.channels.list({
     part: ["contentDetails", "statistics", "snippet"],
-    mine: true,
+    id: [CHANNEL_ID],
   });
 
   if (!channelRes.data.items || channelRes.data.items.length === 0) {
