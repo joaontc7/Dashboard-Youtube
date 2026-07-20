@@ -83,6 +83,12 @@ export default function Dashboard() {
               <div className="stat-label">Média Views/Vídeo</div>
               <div className="stat-value">{stats.avgViewsPerVideo.toLocaleString("pt-BR")}</div>
             </div>
+            <div className="stat-card">
+              <div className="stat-label">Comentários s/ Resposta</div>
+              <div className="stat-value" style={{ color: stats.unrespondedCount === 0 ? "var(--success)" : "var(--warning)" }}>
+                {stats.unrespondedCount}
+              </div>
+            </div>
           </div>
 
           <div className="chart-container" style={{ background: "#161616", padding: "20px", borderRadius: "12px", border: "1px solid #333" }}>

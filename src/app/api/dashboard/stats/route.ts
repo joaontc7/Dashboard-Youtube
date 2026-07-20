@@ -35,12 +35,22 @@ export async function GET() {
 
     const avgViewsPerVideo = parseInt(videoCount) > 0 ? Math.floor(parseInt(viewCount) / parseInt(videoCount)) : 0;
 
+    let unrespondedCount = 0;
+    try {
+      unrespondedCount = await prisma.commentStatus.count({
+        where: { status: "PENDENTE" }
+      });
+    } catch (dbErr) {
+      console.warn("[dashboard/stats] Failed to count unresponded comments:", dbErr);
+    }
+
     return NextResponse.json({
       subscriberCount,
       viewCount,
       videoCount,
       avgViewsPerVideo,
-      recentVideos
+      recentVideos,
+      unrespondedCount
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

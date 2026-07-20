@@ -63,12 +63,12 @@ export default function CommentsOverview() {
         {videos.map(v => (
           <div key={v.id} className="card card-interactive" style={{ 
             display: "flex", gap: "15px", alignItems: "flex-start",
-            borderLeft: v.statusBorder === "red" ? "4px solid var(--danger)" : v.statusBorder === "yellow" ? "4px solid var(--warning)" : v.statusBorder === "green" ? "4px solid var(--success)" : "4px solid transparent"
+            borderLeft: v.statusBorder === "red" ? "4px solid var(--error)" : v.statusBorder === "yellow" ? "4px solid var(--warning)" : v.statusBorder === "green" ? "4px solid var(--success)" : "4px solid transparent"
           }}>
             <div className="video-thumb-wrapper" style={{ width: "160px", flexShrink: 0, borderRadius: "8px", position: "relative" }}>
               <img src={v.snippet?.thumbnails?.medium?.url} alt={v.snippet?.title} style={{ width: "100%", borderRadius: "8px" }} />
               {v.details?.isShort && (
-                <div style={{ position: "absolute", top: "5px", left: "5px", background: "var(--danger)", color: "white", fontSize: "10px", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                <div style={{ position: "absolute", top: "5px", left: "5px", background: "var(--error)", color: "white", fontSize: "10px", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
                   SHORTS
                 </div>
               )}

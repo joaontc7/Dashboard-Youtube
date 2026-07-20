@@ -66,19 +66,45 @@ export async function GET(req: Request) {
       if (missingIds.length > 0) {
         // Encontrou novos! Mapear para inserir no banco e no e-mail
         const missingComments = commentThreads.items.filter((c: any) => missingIds.includes(c.snippet?.topLevelComment?.id));
-        newCommentsFound = [...newCommentsFound, ...missingComments.map((c: any) => ({
-          videoId,
-          videoTitle: v.snippet?.title,
-          ...c
-        }))];
+        
+        // Apenas alertar por email os novos comentários que de fato estão SEM resposta
+        const pendingComments = missingComments.filter((c: any) => (c.snippet?.totalReplyCount || 0) === 0);
+        if (pendingComments.length > 0) {
+          newCommentsFound = [...newCommentsFound, ...pendingComments.map((c: any) => ({
+            videoId,
+            videoTitle: v.snippet?.title,
+            ...c
+          }))];
+        }
         
         await prisma.commentStatus.createMany({
-          data: missingIds.map((id: string) => ({
-            youtubeCommentId: id,
-            videoId: videoId,
-            status: "PENDENTE"
-          }))
+          data: missingComments.map((c: any) => {
+            const id = c.snippet.topLevelComment.id;
+            const hasReply = (c.snippet.totalReplyCount || 0) > 0;
+            return {
+              youtubeCommentId: id,
+              videoId: videoId,
+              status: hasReply ? "RESPONDIDO" : "PENDENTE"
+            };
+          })
         });
+      }
+
+      // Atualizar no banco os comentários que eram PENDENTE mas agora já foram respondidos
+      const pendingStatuses = existingStatuses.filter((s: any) => s.status === "PENDENTE");
+      if (pendingStatuses.length > 0) {
+        const pendingIds = pendingStatuses.map((s: any) => s.youtubeCommentId);
+        const nowResponded = commentThreads.items.filter((c: any) => {
+          const id = c.snippet?.topLevelComment?.id;
+          return id && pendingIds.includes(id) && (c.snippet.totalReplyCount || 0) > 0;
+        });
+        if (nowResponded.length > 0) {
+          const nowRespondedIds = nowResponded.map((c: any) => c.snippet.topLevelComment.id);
+          await prisma.commentStatus.updateMany({
+            where: { youtubeCommentId: { in: nowRespondedIds } },
+            data: { status: "RESPONDIDO" }
+          });
+        }
       }
     }
 

@@ -57,7 +57,7 @@ export default function VideoComments() {
 
           return (
             <div key={commentId} className="card" style={{ 
-              borderLeft: hasReplies ? "4px solid var(--success)" : "4px solid var(--danger)"
+              borderLeft: hasReplies ? "4px solid var(--success)" : "4px solid var(--error)"
             }}>
               <div style={{ display: "flex", gap: "15px" }}>
                 <img src={topComment?.authorProfileImageUrl} alt={topComment?.authorDisplayName} style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0 }} />
@@ -106,7 +106,7 @@ export default function VideoComments() {
                       <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                       Ver no YouTube
                     </a>
-                    <span style={{ fontSize: "12px", color: hasReplies ? "var(--success)" : "var(--danger)" }}>
+                    <span style={{ fontSize: "12px", color: hasReplies ? "var(--success)" : "var(--error)" }}>
                       {hasReplies ? "✓ Respondido" : "⚠ Sem resposta"}
                     </span>
                   </div>

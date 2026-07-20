@@ -35,17 +35,45 @@ export async function GET(req: Request) {
         where: { youtubeCommentId: { in: commentIds } }
       });
 
-      // Try to save new comments as PENDENTE
+      // Try to save new comments, checking if they are already replied to on YouTube
       const existingIds = new Set(statuses.map((s: any) => s.youtubeCommentId));
       const missingIds = commentIds.filter((id: string) => !existingIds.has(id));
       if (missingIds.length > 0) {
+        const missingComments = comments.filter((c: any) => missingIds.includes(c.snippet?.topLevelComment?.id));
         await prisma.commentStatus.createMany({
-          data: missingIds.map((id: string) => ({
-            youtubeCommentId: id,
-            videoId: videoId,
-            status: "PENDENTE"
-          }))
+          data: missingComments.map((c: any) => {
+            const id = c.snippet.topLevelComment.id;
+            const hasReply = (c.snippet.totalReplyCount || 0) > 0;
+            return {
+              youtubeCommentId: id,
+              videoId: videoId,
+              status: hasReply ? "RESPONDIDO" : "PENDENTE"
+            };
+          })
         });
+      }
+
+      // Check if any existing pendings now have replies
+      const pendingStatuses = statuses.filter((s: any) => s.status === "PENDENTE");
+      if (pendingStatuses.length > 0) {
+        const pendingIds = pendingStatuses.map((s: any) => s.youtubeCommentId);
+        const nowResponded = comments.filter((c: any) => {
+          const id = c.snippet?.topLevelComment?.id;
+          return id && pendingIds.includes(id) && (c.snippet.totalReplyCount || 0) > 0;
+        });
+        if (nowResponded.length > 0) {
+          const nowRespondedIds = nowResponded.map((c: any) => c.snippet.topLevelComment.id);
+          await prisma.commentStatus.updateMany({
+            where: { youtubeCommentId: { in: nowRespondedIds } },
+            data: { status: "RESPONDIDO" }
+          });
+          // Update our local array to reflect the updated status
+          statuses.forEach((s: any) => {
+            if (nowRespondedIds.includes(s.youtubeCommentId)) {
+              s.status = "RESPONDIDO";
+            }
+          });
+        }
       }
 
       // Build status map
@@ -57,13 +85,19 @@ export async function GET(req: Request) {
         };
       });
       missingIds.forEach((id: string) => {
-        statusMap[id] = { status: "PENDENTE" };
+        const correspondingYtComment = comments.find((c: any) => c.snippet?.topLevelComment?.id === id);
+        const hasReply = (correspondingYtComment?.snippet?.totalReplyCount || 0) > 0;
+        statusMap[id] = { status: hasReply ? "RESPONDIDO" : "PENDENTE" };
       });
     } catch (dbErr) {
       console.warn("[comments/list] DB unavailable, returning YouTube data without statuses:", (dbErr as Error).message);
-      // All comments will show as PENDENTE without DB
-      commentIds.forEach((id: string) => {
-        statusMap[id] = { status: "PENDENTE" };
+      // All comments will show as PENDENTE without DB or based on YouTube reply count
+      comments.forEach((c: any) => {
+        const id = c.snippet?.topLevelComment?.id;
+        if (id) {
+          const hasReply = (c.snippet?.totalReplyCount || 0) > 0;
+          statusMap[id] = { status: hasReply ? "RESPONDIDO" : "PENDENTE" };
+        }
       });
     }
 
