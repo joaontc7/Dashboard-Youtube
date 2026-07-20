@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<any>(null);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function Dashboard() {
 
   const loadData = async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const resStats = await fetch("/api/dashboard/stats");
       if (resStats.status === 401) {
@@ -25,12 +27,17 @@ export default function Dashboard() {
         window.location.href = "/api/auth/signin";
         return;
       }
-      if (resStats.ok) setStats(await resStats.json());
+      if (!resStats.ok) {
+         const err = await resStats.json().catch(() => ({}));
+         throw new Error(err.error || `Erro HTTP ${resStats.status} ao carregar métricas.`);
+      }
+      setStats(await resStats.json());
       
       const resLeads = await fetch("/api/leads");
       if (resLeads.ok) setLeads(await resLeads.json());
-    } catch(e) {
+    } catch(e: any) {
       console.error(e);
+      setErrorMsg(e.message);
     }
     setLoading(false);
   };
@@ -48,6 +55,14 @@ export default function Dashboard() {
       </div>
 
       {loading && <p>Carregando dados...</p>}
+      
+      {errorMsg && (
+        <div style={{ padding: "20px", background: "#3a1c1c", border: "1px solid #ff4444", borderRadius: "8px", color: "#ff8888", marginBottom: "20px" }}>
+          <strong>Ocorreu um erro ao buscar os dados:</strong> {errorMsg}
+          <br /><br />
+          <em>Tente sair da sua conta (clicando em "Sair" na lateral) e fazer o login novamente.</em>
+        </div>
+      )}
 
       {!loading && activeTab === "visao" && stats && (
         <>
