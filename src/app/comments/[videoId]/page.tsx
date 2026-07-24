@@ -79,11 +79,17 @@ export default function VideoComments() {
           const topComment = c.snippet?.topLevelComment?.snippet;
           const commentId = c.snippet?.topLevelComment?.id || c.id;
           const hasReplies = c.replies?.comments && c.replies.comments.length > 0;
+          const isOwnerResponded = c.localStatus === "RESPONDIDO" || (c.replies?.comments && c.replies.comments.some((r: any) => {
+            const authorId = r.snippet?.authorChannelId?.value;
+            const authorUrl = r.snippet?.authorChannelUrl || "";
+            const name = (r.snippet?.authorDisplayName || "").toLowerCase();
+            return authorId === "UCfIHSZPt-yQ5foOm7NscflQ" || authorUrl.includes("UCfIHSZPt-yQ5foOm7NscflQ") || name.includes("luiz paulo");
+          }));
           const isCopied = copiedId === commentId;
 
           return (
             <div key={commentId} className="card" style={{ 
-              borderLeft: hasReplies ? "4px solid var(--success)" : "4px solid var(--error)"
+              borderLeft: isOwnerResponded ? "4px solid var(--success)" : "4px solid var(--error)"
             }}>
               <div style={{ display: "flex", gap: "15px" }}>
                 <img src={topComment?.authorProfileImageUrl} alt={topComment?.authorDisplayName} style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0 }} />
@@ -154,8 +160,8 @@ export default function VideoComments() {
                         )}
                       </button>
                     </div>
-                    <span style={{ fontSize: "12px", color: hasReplies ? "var(--success)" : "var(--error)" }}>
-                      {hasReplies ? "✓ Respondido" : "⚠ Sem resposta"}
+                    <span style={{ fontSize: "12px", color: isOwnerResponded ? "var(--success)" : "var(--error)" }}>
+                      {isOwnerResponded ? "✓ Respondido" : "⚠ Sem resposta"}
                     </span>
                   </div>
                 </div>

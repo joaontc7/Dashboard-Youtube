@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Resend } from "resend";
 import { prisma } from "../../../lib/db";
-import { getChannelData, getVideosPage, getVideoComments } from "../../../lib/youtube";
+import { getChannelData, getVideosPage, getVideoComments, isOwnerResponded } from "../../../lib/youtube";
 
 export const maxDuration = 60; // Permite que a Vercel rode esse script por mais tempo se necessário
 
@@ -67,8 +67,8 @@ export async function GET(req: Request) {
         // Encontrou novos! Mapear para inserir no banco e no e-mail
         const missingComments = commentThreads.items.filter((c: any) => missingIds.includes(c.snippet?.topLevelComment?.id));
         
-        // Apenas alertar por email os novos comentários que de fato estão SEM resposta
-        const pendingComments = missingComments.filter((c: any) => (c.snippet?.totalReplyCount || 0) === 0);
+        // Apenas alertar por email os novos comentários que de fato estão SEM resposta do canal
+        const pendingComments = missingComments.filter((c: any) => !isOwnerResponded(c));
         if (pendingComments.length > 0) {
           newCommentsFound = [...newCommentsFound, ...pendingComments.map((c: any) => ({
             videoId,
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
         await prisma.commentStatus.createMany({
           data: missingComments.map((c: any) => {
             const id = c.snippet.topLevelComment.id;
-            const hasReply = (c.snippet.totalReplyCount || 0) > 0;
+            const hasReply = isOwnerResponded(c);
             return {
               youtubeCommentId: id,
               videoId: videoId,
@@ -90,13 +90,13 @@ export async function GET(req: Request) {
         });
       }
 
-      // Atualizar no banco os comentários que eram PENDENTE mas agora já foram respondidos
+      // Atualizar no banco os comentários que eram PENDENTE mas agora já foram respondidos pelo canal
       const pendingStatuses = existingStatuses.filter((s: any) => s.status === "PENDENTE");
       if (pendingStatuses.length > 0) {
         const pendingIds = pendingStatuses.map((s: any) => s.youtubeCommentId);
         const nowResponded = commentThreads.items.filter((c: any) => {
           const id = c.snippet?.topLevelComment?.id;
-          return id && pendingIds.includes(id) && (c.snippet.totalReplyCount || 0) > 0;
+          return id && pendingIds.includes(id) && isOwnerResponded(c);
         });
         if (nowResponded.length > 0) {
           const nowRespondedIds = nowResponded.map((c: any) => c.snippet.topLevelComment.id);

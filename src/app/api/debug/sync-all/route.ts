@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
-import { getChannelData, getVideosPage, getVideoComments } from "../../../lib/youtube";
+import { getChannelData, getVideosPage, getVideoComments, isOwnerResponded } from "../../../lib/youtube";
 import { prisma } from "../../../lib/db";
 
 export async function POST() {
@@ -50,7 +50,7 @@ export async function POST() {
           await prisma.commentStatus.createMany({
             data: missingComments.map((c: any) => {
               const id = c.snippet.topLevelComment.id;
-              const hasReply = (c.snippet.totalReplyCount || 0) > 0;
+              const hasReply = isOwnerResponded(c);
               return {
                 youtubeCommentId: id,
                 videoId: videoId,
@@ -60,13 +60,13 @@ export async function POST() {
           });
         }
 
-        // Update existing pendings
+        // Update existing pendings that now have owner replies
         const pendingStatuses = existingStatuses.filter((s: any) => s.status === "PENDENTE");
         if (pendingStatuses.length > 0) {
           const pendingIds = pendingStatuses.map((s: any) => s.youtubeCommentId);
           const nowResponded = commentThreads.items.filter((c: any) => {
             const id = c.snippet?.topLevelComment?.id;
-            return id && pendingIds.includes(id) && (c.snippet.totalReplyCount || 0) > 0;
+            return id && pendingIds.includes(id) && isOwnerResponded(c);
           });
 
           if (nowResponded.length > 0) {

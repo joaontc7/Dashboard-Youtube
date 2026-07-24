@@ -6,12 +6,27 @@ export function getYouTubeClient(accessToken: string) {
   return google.youtube({ version: "v3", auth });
 }
 
+export const LUIZ_PAULO_CHANNEL_ID = "UCfIHSZPt-yQ5foOm7NscflQ";
+
+export function isOwnerResponded(commentThread: any): boolean {
+  if (!commentThread) return false;
+  const replies = commentThread.replies?.comments;
+  if (!replies || !Array.isArray(replies) || replies.length === 0) {
+    return false;
+  }
+  return replies.some((r: any) => {
+    const authorId = r.snippet?.authorChannelId?.value;
+    const authorUrl = r.snippet?.authorChannelUrl || "";
+    const name = (r.snippet?.authorDisplayName || "").toLowerCase();
+    return authorId === LUIZ_PAULO_CHANNEL_ID || authorUrl.includes(LUIZ_PAULO_CHANNEL_ID) || name.includes("luiz paulo");
+  });
+}
+
 export async function getChannelData(accessToken: string) {
   const youtube = getYouTubeClient(accessToken);
-  const CHANNEL_ID = "UCfIHSZPt-yQ5foOm7NscflQ"; // Luiz Paulo Araújo (@luizpaulo_arjs)
   const channelRes = await youtube.channels.list({
     part: ["contentDetails", "statistics", "snippet"],
-    id: [CHANNEL_ID],
+    id: [LUIZ_PAULO_CHANNEL_ID],
   });
 
   if (!channelRes.data.items || channelRes.data.items.length === 0) {
