@@ -40,6 +40,42 @@ export default function VideoComments() {
     });
   };
 
+  const handleDeleteComment = async (targetId: string, parentCommentId?: string) => {
+    if (!confirm("Tem certeza de que deseja excluir este item do YouTube? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/comments/${targetId}`, { method: "DELETE" });
+      if (res.ok) {
+        if (parentCommentId) {
+          // Remover apenas a resposta específica dentro do comentário pai
+          setComments(prev => prev.map(c => {
+            const topId = c.snippet?.topLevelComment?.id || c.id;
+            if (topId === parentCommentId && c.replies?.comments) {
+              return {
+                ...c,
+                replies: {
+                  ...c.replies,
+                  comments: c.replies.comments.filter((r: any) => r.id !== targetId)
+                }
+              };
+            }
+            return c;
+          }));
+        } else {
+          // Remover o comentário principal inteiro da lista
+          setComments(prev => prev.filter(c => (c.snippet?.topLevelComment?.id || c.id) !== targetId));
+        }
+      } else {
+        alert("Não foi possível excluir o comentário do YouTube. Verifique suas permissões.");
+      }
+    } catch (err) {
+      console.error("Erro ao excluir comentário:", err);
+      alert("Erro de conexão ao tentar excluir.");
+    }
+  };
+
   return (
     <div>
       <div className="toolbar" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
@@ -71,7 +107,7 @@ export default function VideoComments() {
       </div>
 
       <div style={{ marginBottom: "20px", padding: "12px 16px", background: "rgba(134, 104, 93, 0.1)", border: "1px solid rgba(134, 104, 93, 0.3)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)" }}>
-        💡 <strong>Ir direto ao comentário:</strong> Clique em <em>"Ir para o Comentário"</em> — o YouTube abrirá o vídeo e rolará automaticamente até o comentário destacado. Se o auto-scroll não funcionar (ex: ad-blocker interferindo), use <em>"Copiar Texto"</em> e cole com <strong>Ctrl+F</strong> no YouTube Studio.
+        💡 <strong>Gestão de Comentários:</strong> Clique em <em>"Ir para o Comentário"</em> para visualizar no YouTube, ou use o botão <em>"Excluir"</em> para remover qualquer comentário inadequado ou resposta indevida diretamente da sua conta.
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -79,7 +115,9 @@ export default function VideoComments() {
           const topComment = c.snippet?.topLevelComment?.snippet;
           const commentId = c.snippet?.topLevelComment?.id || c.id;
           const hasReplies = c.replies?.comments && c.replies.comments.length > 0;
-          const isOwnerResponded = c.localStatus === "RESPONDIDO" || (c.replies?.comments && c.replies.comments.some((r: any) => {
+          
+          // Strict check: Only true if Luiz Paulo channel actually replied
+          const isOwnerResponded = !!(c.replies?.comments && c.replies.comments.some((r: any) => {
             const authorId = r.snippet?.authorChannelId?.value;
             const authorUrl = r.snippet?.authorChannelUrl || "";
             const name = (r.snippet?.authorDisplayName || "").toLowerCase();
@@ -112,15 +150,25 @@ export default function VideoComments() {
                         const replySnippet = reply.snippet;
                         const replyId = reply.id;
                         return (
-                          <div key={replyId} style={{ display: "flex", gap: "10px" }}>
-                            <img src={replySnippet.authorProfileImageUrl} alt={replySnippet.authorDisplayName} style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
-                            <div>
-                              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                <strong style={{ color: "var(--accent)", fontSize: "13px" }}>{replySnippet.authorDisplayName}</strong>
-                                <span style={{ fontSize: "11px", color: "#555" }}>{new Date(replySnippet.publishedAt).toLocaleDateString("pt-BR")}</span>
+                          <div key={replyId} style={{ display: "flex", gap: "10px", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", gap: "10px" }}>
+                              <img src={replySnippet.authorProfileImageUrl} alt={replySnippet.authorDisplayName} style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                              <div>
+                                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                  <strong style={{ color: "var(--accent)", fontSize: "13px" }}>{replySnippet.authorDisplayName}</strong>
+                                  <span style={{ fontSize: "11px", color: "#555" }}>{new Date(replySnippet.publishedAt).toLocaleDateString("pt-BR")}</span>
+                                </div>
+                                <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#ccc", lineHeight: "1.4" }}>{replySnippet.textDisplay}</p>
                               </div>
-                              <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#ccc", lineHeight: "1.4" }}>{replySnippet.textDisplay}</p>
                             </div>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ fontSize: "11px", padding: "2px 8px", color: "var(--error)", border: "1px solid rgba(239, 68, 68, 0.2)", flexShrink: 0 }}
+                              onClick={() => handleDeleteComment(replyId, commentId)}
+                              title="Excluir esta resposta do YouTube"
+                            >
+                              Excluir
+                            </button>
                           </div>
                         );
                       })}
@@ -158,6 +206,16 @@ export default function VideoComments() {
                             Copiar Texto
                           </>
                         )}
+                      </button>
+                      {/* Botão Excluir Comentário */}
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--error)", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+                        onClick={() => handleDeleteComment(commentId)}
+                        title="Excluir este comentário do YouTube"
+                      >
+                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Excluir
                       </button>
                     </div>
                     <span style={{ fontSize: "12px", color: isOwnerResponded ? "var(--success)" : "var(--error)" }}>

@@ -88,19 +88,32 @@ export async function GET(req: Request) {
         }
       }
 
-      // Build status map
-      statuses.forEach((s: any) => {
-        statusMap[s.youtubeCommentId] = {
-          status: s.status,
-          verifiedBy: s.verifiedBy,
-          verifiedAt: s.verifiedAt,
+      // Re-evaluate all statuses against isOwnerResponded to fix old stale records
+      const staleRespondedIds: string[] = [];
+      comments.forEach((c: any) => {
+        const id = c.snippet?.topLevelComment?.id;
+        if (!id) return;
+        const realIsResponded = isOwnerResponded(c);
+        const currentDbStatus = statuses.find((s: any) => s.youtubeCommentId === id);
+
+        if (currentDbStatus && currentDbStatus.status === "RESPONDIDO" && !realIsResponded) {
+          staleRespondedIds.push(id);
+          currentDbStatus.status = "PENDENTE";
+        }
+
+        statusMap[id] = {
+          status: realIsResponded ? "RESPONDIDO" : "PENDENTE",
+          verifiedBy: currentDbStatus?.verifiedBy,
+          verifiedAt: currentDbStatus?.verifiedAt,
         };
       });
-      missingIds.forEach((id: string) => {
-        const correspondingYtComment = comments.find((c: any) => c.snippet?.topLevelComment?.id === id);
-        const hasReply = isOwnerResponded(correspondingYtComment);
-        statusMap[id] = { status: hasReply ? "RESPONDIDO" : "PENDENTE" };
-      });
+
+      if (staleRespondedIds.length > 0) {
+        await prisma.commentStatus.updateMany({
+          where: { youtubeCommentId: { in: staleRespondedIds } },
+          data: { status: "PENDENTE" }
+        });
+      }
     } catch (dbErr) {
       console.warn("[comments/list] DB unavailable, returning YouTube data without statuses:", (dbErr as Error).message);
       comments.forEach((c: any) => {
