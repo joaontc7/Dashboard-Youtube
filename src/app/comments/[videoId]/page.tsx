@@ -47,6 +47,7 @@ export default function VideoComments() {
 
     try {
       const res = await fetch(`/api/comments/${targetId}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         if (parentCommentId) {
           // Remover apenas a resposta específica dentro do comentário pai
@@ -68,7 +69,7 @@ export default function VideoComments() {
           setComments(prev => prev.filter(c => (c.snippet?.topLevelComment?.id || c.id) !== targetId));
         }
       } else {
-        alert("Não foi possível excluir o comentário do YouTube. Verifique suas permissões.");
+        alert(data.error || "Não foi possível excluir o comentário do YouTube. Verifique suas permissões.");
       }
     } catch (err) {
       console.error("Erro ao excluir comentário:", err);
