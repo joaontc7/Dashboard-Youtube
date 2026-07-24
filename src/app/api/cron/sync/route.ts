@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { Resend } from "resend";
 import { prisma } from "../../../lib/db";
 import { getChannelData, getVideosPage, getVideoComments, isOwnerResponded } from "../../../lib/youtube";
+import { upsertLeadFromComment } from "../../../lib/leads";
 
 export const maxDuration = 60; // Permite que a Vercel rode esse script por mais tempo se necessário
 
@@ -88,6 +89,13 @@ export async function GET(req: Request) {
             };
           })
         });
+
+        // Upsert Leads for responded comments
+        for (const c of missingComments) {
+          if (isOwnerResponded(c)) {
+            await upsertLeadFromComment(prisma, c, v.snippet?.title);
+          }
+        }
       }
 
       // Atualizar no banco os comentários que eram PENDENTE mas agora já foram respondidos pelo canal
@@ -104,6 +112,9 @@ export async function GET(req: Request) {
             where: { youtubeCommentId: { in: nowRespondedIds } },
             data: { status: "RESPONDIDO" }
           });
+          for (const c of nowResponded) {
+            await upsertLeadFromComment(prisma, c, v.snippet?.title);
+          }
         }
       }
     }

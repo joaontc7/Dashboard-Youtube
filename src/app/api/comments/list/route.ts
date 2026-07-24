@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { getVideoComments, isOwnerResponded } from "../../../lib/youtube";
+import { upsertLeadFromComment } from "../../../lib/leads";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -51,6 +52,13 @@ export async function GET(req: Request) {
             };
           })
         });
+
+        // Create Leads for responded comments
+        for (const c of missingComments) {
+          if (isOwnerResponded(c)) {
+            await upsertLeadFromComment(prisma, c);
+          }
+        }
       }
 
       // Check if any existing pendings now have owner replies
@@ -67,6 +75,10 @@ export async function GET(req: Request) {
             where: { youtubeCommentId: { in: nowRespondedIds } },
             data: { status: "RESPONDIDO" }
           });
+          // Create Leads for newly responded comments
+          for (const c of nowResponded) {
+            await upsertLeadFromComment(prisma, c);
+          }
           // Update our local array to reflect the updated status
           statuses.forEach((s: any) => {
             if (nowRespondedIds.includes(s.youtubeCommentId)) {

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { getVideoComments, isOwnerResponded } from "../../../lib/youtube";
 import { prisma } from "../../../lib/db";
+import { upsertLeadFromComment } from "../../../lib/leads";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -62,6 +63,12 @@ export async function POST(req: Request) {
               };
             })
           });
+
+          for (const c of missingComments) {
+            if (isOwnerResponded(c)) {
+              await upsertLeadFromComment(prisma, c);
+            }
+          }
         }
 
         // 2. Update existing PENDENTE comments that now have owner replies
@@ -79,6 +86,9 @@ export async function POST(req: Request) {
               where: { youtubeCommentId: { in: nowRespondedIds } },
               data: { status: "RESPONDIDO" }
             });
+            for (const c of nowResponded) {
+              await upsertLeadFromComment(prisma, c);
+            }
           }
         }
 

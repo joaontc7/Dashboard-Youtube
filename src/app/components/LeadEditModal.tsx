@@ -84,8 +84,23 @@ export default function LeadEditModal({ isOpen, onClose, lead, onSave }: { isOpe
 
           <div>
             <label style={{ display: "block", marginBottom: "5px", color: "#ccc" }}>Anotações</label>
-            <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={4} style={{ width: "100%", padding: "10px", background: "#161616", border: "1px solid #333", color: "#fff", borderRadius: "4px" }} />
+            <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={3} style={{ width: "100%", padding: "10px", background: "#161616", border: "1px solid #333", color: "#fff", borderRadius: "4px" }} />
           </div>
+
+          {lead?.comments && lead.comments.length > 0 && (
+            <div style={{ borderTop: "1px solid #333", paddingTop: "15px" }}>
+              <label style={{ display: "block", marginBottom: "8px", color: "var(--accent-light)", fontWeight: "bold" }}>Comentários no YouTube ({lead.comments.length})</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "150px", overflowY: "auto" }}>
+                {lead.comments.map((lc: any) => (
+                  <div key={lc.id} style={{ background: "#222", padding: "8px 12px", borderRadius: "4px", fontSize: "12px" }}>
+                    {lc.videoTitle && <div style={{ color: "#888", fontSize: "11px", marginBottom: "2px" }}>📹 {lc.videoTitle}</div>}
+                    <div style={{ color: "#eee" }}>"{lc.commentText}"</div>
+                    <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>{new Date(lc.commentDate).toLocaleDateString("pt-BR")}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
             <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? "Salvando..." : "Salvar Alterações"}</button>

@@ -52,7 +52,7 @@ export default function LeadsPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Banco de <span>Leads</span></h1>
-        <p className="page-subtitle">Gerencie o CRM de contatos gerados através dos comentários do YouTube.</p>
+        <p className="page-subtitle">Gerencie o CRM de contatos cadastrados automaticamente quando um comentário é respondido por você no YouTube.</p>
       </div>
 
       <div className="toolbar" style={{ display: "flex", gap: "15px", marginBottom: "30px", flexWrap: "wrap", background: "#161616", padding: "15px", borderRadius: "8px", border: "1px solid #333" }}>

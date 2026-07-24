@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { getChannelData, getVideosPage, getVideoComments, isOwnerResponded } from "../../../lib/youtube";
 import { prisma } from "../../../lib/db";
+import { upsertLeadFromComment } from "../../../lib/leads";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -58,6 +59,12 @@ export async function POST() {
               };
             })
           });
+
+          for (const c of missingComments) {
+            if (isOwnerResponded(c)) {
+              await upsertLeadFromComment(prisma, c, v.snippet?.title);
+            }
+          }
         }
 
         // Update existing pendings that now have owner replies
@@ -75,6 +82,9 @@ export async function POST() {
               where: { youtubeCommentId: { in: nowRespondedIds } },
               data: { status: "RESPONDIDO" }
             });
+            for (const c of nowResponded) {
+              await upsertLeadFromComment(prisma, c, v.snippet?.title);
+            }
           }
         }
 
