@@ -37,22 +37,37 @@ export default function VideoComments() {
           <button className="btn btn-ghost" onClick={() => router.back()}>← Voltar</button>
           <h2 style={{ margin: 0 }}>Comentários do Vídeo</h2>
         </div>
-        <a 
-          href={`https://www.youtube.com/watch?v=${videoId}`} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="btn btn-primary"
-          style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          Responder no YouTube
-        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <a 
+            href={`https://studio.youtube.com/video/${videoId}/comments`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn btn-primary"
+            style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Responder no YouTube Studio
+          </a>
+          <a 
+            href={`https://www.youtube.com/watch?v=${videoId}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn btn-secondary"
+            style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+          >
+            Abrir Vídeo
+          </a>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "20px", padding: "12px 16px", background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.3)", borderRadius: "8px", fontSize: "13px", color: "#93c5fd" }}>
+        💡 <strong>Como funciona o destaque:</strong> Ao clicar em <em>"Ver no YouTube (Destaque)"</em>, o YouTube abre o vídeo com o parâmetro de comentário vinculado (<code>&lc=</code>). Basta <strong>rolar a página para baixo do player de vídeo</strong> para ver o comentário fixado no topo como <strong>"Comentário em destaque"</strong>. Se preferir gerenciar na área de criador, clique em <em>"Responder no Studio"</em>.
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {comments.map(c => {
           const topComment = c.snippet?.topLevelComment?.snippet;
-          const commentId = c.snippet?.topLevelComment?.id;
+          const commentId = c.snippet?.topLevelComment?.id || c.id;
           const hasReplies = c.replies?.comments && c.replies.comments.length > 0;
 
           return (
@@ -78,34 +93,61 @@ export default function VideoComments() {
                     <div style={{ marginTop: "15px", paddingLeft: "15px", borderLeft: "2px solid #333", display: "flex", flexDirection: "column", gap: "12px" }}>
                       {c.replies.comments.map((reply: any) => {
                         const replySnippet = reply.snippet;
+                        const replyId = reply.id;
                         return (
-                          <div key={reply.id} style={{ display: "flex", gap: "10px" }}>
-                            <img src={replySnippet.authorProfileImageUrl} alt={replySnippet.authorDisplayName} style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
-                            <div>
-                              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                <strong style={{ color: "var(--accent)", fontSize: "13px" }}>{replySnippet.authorDisplayName}</strong>
-                                <span style={{ fontSize: "11px", color: "#555" }}>{new Date(replySnippet.publishedAt).toLocaleDateString("pt-BR")}</span>
+                          <div key={replyId} style={{ display: "flex", gap: "10px", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", gap: "10px" }}>
+                              <img src={replySnippet.authorProfileImageUrl} alt={replySnippet.authorDisplayName} style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                              <div>
+                                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                  <strong style={{ color: "var(--accent)", fontSize: "13px" }}>{replySnippet.authorDisplayName}</strong>
+                                  <span style={{ fontSize: "11px", color: "#555" }}>{new Date(replySnippet.publishedAt).toLocaleDateString("pt-BR")}</span>
+                                </div>
+                                <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#ccc", lineHeight: "1.4" }}>{replySnippet.textDisplay}</p>
                               </div>
-                              <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#ccc", lineHeight: "1.4" }}>{replySnippet.textDisplay}</p>
                             </div>
+                            <a 
+                              href={`https://www.youtube.com/watch?v=${videoId}&lc=${replyId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-ghost btn-sm"
+                              style={{ fontSize: "11px", padding: "2px 6px" }}
+                              title="Ver esta resposta no YouTube"
+                            >
+                              Ver Resposta ↗
+                            </a>
                           </div>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* Link direto para o comentário no YouTube */}
-                  <div style={{ marginTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <a 
-                      href={`https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="btn btn-ghost btn-sm" 
-                      style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
-                    >
-                      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                      Ver no YouTube
-                    </a>
+                  {/* Links diretos para o comentário */}
+                  <div style={{ marginTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      <a 
+                        href={`https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-ghost btn-sm" 
+                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
+                        title="Abre o vídeo destacando este comentário (role para baixo do player)"
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Ver no YouTube (Destaque)
+                      </a>
+                      <a 
+                        href={`https://studio.youtube.com/video/${videoId}/comments`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-ghost btn-sm" 
+                        style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--accent-light)" }}
+                        title="Abre a área de comentários no YouTube Studio para responder como criador"
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Responder no Studio
+                      </a>
+                    </div>
                     <span style={{ fontSize: "12px", color: hasReplies ? "var(--success)" : "var(--error)" }}>
                       {hasReplies ? "✓ Respondido" : "⚠ Sem resposta"}
                     </span>
