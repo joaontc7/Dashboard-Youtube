@@ -90,12 +90,25 @@ export default function LeadEditModal({ isOpen, onClose, lead, onSave }: { isOpe
           {lead?.comments && lead.comments.length > 0 && (
             <div style={{ borderTop: "1px solid #333", paddingTop: "15px" }}>
               <label style={{ display: "block", marginBottom: "8px", color: "var(--accent-light)", fontWeight: "bold" }}>Comentários no YouTube ({lead.comments.length})</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "150px", overflowY: "auto" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "180px", overflowY: "auto" }}>
                 {lead.comments.map((lc: any) => (
-                  <div key={lc.id} style={{ background: "#222", padding: "8px 12px", borderRadius: "4px", fontSize: "12px" }}>
-                    {lc.videoTitle && <div style={{ color: "#888", fontSize: "11px", marginBottom: "2px" }}>📹 {lc.videoTitle}</div>}
-                    <div style={{ color: "#eee" }}>"{lc.commentText}"</div>
-                    <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>{new Date(lc.commentDate).toLocaleDateString("pt-BR")}</div>
+                  <div key={lc.id} style={{ background: "#222", padding: "10px 12px", borderRadius: "6px", fontSize: "12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+                    <div style={{ flex: 1 }}>
+                      {lc.videoTitle && <div style={{ color: "#888", fontSize: "11px", marginBottom: "3px" }}>📹 {lc.videoTitle}</div>}
+                      <div style={{ color: "#eee", lineHeight: "1.4" }}>"{lc.commentText}"</div>
+                      <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>{new Date(lc.commentDate).toLocaleDateString("pt-BR")}</div>
+                    </div>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${lc.videoId}&lc=${lc.commentId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: "11px", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}
+                      title="Ver este comentário no YouTube"
+                    >
+                      <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      Ver no YouTube ↗
+                    </a>
                   </div>
                 ))}
               </div>
