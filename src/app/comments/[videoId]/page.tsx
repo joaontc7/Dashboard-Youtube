@@ -31,16 +31,12 @@ export default function VideoComments() {
     setLoading(false);
   };
 
-  const copyAndOpen = (text: string, commentId: string) => {
-    // Strip HTML tags for clean text
+  const copyToClipboard = (text: string, id: string) => {
     const cleanText = text.replace(/<[^>]*>/g, "").trim();
-    // Take the first 60 chars to make search easier
     const snippet = cleanText.length > 60 ? cleanText.substring(0, 60) : cleanText;
     navigator.clipboard.writeText(snippet).then(() => {
-      setCopiedId(commentId);
+      setCopiedId(id);
       setTimeout(() => setCopiedId(null), 3000);
-      // Open YouTube Studio comments for this video
-      window.open(`https://studio.youtube.com/video/${videoId}/comments`, "_blank");
     });
   };
 
@@ -75,7 +71,7 @@ export default function VideoComments() {
       </div>
 
       <div style={{ marginBottom: "20px", padding: "12px 16px", background: "rgba(134, 104, 93, 0.1)", border: "1px solid rgba(134, 104, 93, 0.3)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)" }}>
-        💡 <strong>Dica:</strong> Clique em <em>"Copiar e Abrir no Studio"</em> em qualquer comentário. O texto será copiado automaticamente — no YouTube Studio, use <strong>Ctrl+F</strong> e cole para localizar o comentário na hora e responder como Luiz Paulo.
+        💡 <strong>Ir direto ao comentário:</strong> Clique em <em>"Ir para o Comentário"</em> — o YouTube abrirá o vídeo e rolará automaticamente até o comentário destacado. Se o auto-scroll não funcionar (ex: ad-blocker interferindo), use <em>"Copiar Texto"</em> e cole com <strong>Ctrl+F</strong> no YouTube Studio.
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -127,23 +123,37 @@ export default function VideoComments() {
 
                   {/* Ações do comentário */}
                   <div style={{ marginTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-                    <button 
-                      className="btn btn-secondary btn-sm"
-                      style={{ display: "inline-flex", alignItems: "center", gap: "6px", transition: "all 0.2s" }}
-                      onClick={() => copyAndOpen(topComment?.textDisplay || "", commentId)}
-                    >
-                      {isCopied ? (
-                        <>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          <span style={{ color: "var(--success)" }}>Copiado! Abrindo Studio...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                          Copiar e Abrir no Studio
-                        </>
-                      )}
-                    </button>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      {/* Botão principal: Ir direto ao comentário no YouTube */}
+                      <a 
+                        href={`https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Ir para o Comentário
+                      </a>
+                      {/* Botão alternativo: Copiar texto */}
+                      <button 
+                        className="btn btn-ghost btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
+                        onClick={() => copyToClipboard(topComment?.textDisplay || "", commentId)}
+                      >
+                        {isCopied ? (
+                          <>
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--success)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span style={{ color: "var(--success)" }}>Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copiar Texto
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <span style={{ fontSize: "12px", color: hasReplies ? "var(--success)" : "var(--error)" }}>
                       {hasReplies ? "✓ Respondido" : "⚠ Sem resposta"}
                     </span>
