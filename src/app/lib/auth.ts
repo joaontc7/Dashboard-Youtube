@@ -21,6 +21,7 @@ export const authOptions: NextAuthOptions = {
       const userEmail = user.email?.trim().toLowerCase() || "";
       const envWhitelist = process.env.WHITELIST_EMAILS?.split(",").map(e => e.trim().toLowerCase()) || [];
       const defaultAllowed = [
+        "diretoria.ironmasters@gmail.com",
         "liukenn12@gmail.com",
         "juridoco.falconuberlandia@gmail.com",
         "juridico2.ironmasters@gmail.com",
