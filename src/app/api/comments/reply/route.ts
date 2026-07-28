@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         });
         if (threadRes.data.items && threadRes.data.items.length > 0) {
           const { upsertLeadFromComment } = await import("../../../lib/leads");
-          await upsertLeadFromComment(threadRes.data.items[0]);
+          await upsertLeadFromComment(prisma, threadRes.data.items[0]);
         }
       } catch (leadErr) {
         console.warn("[comments/reply] Error upserting lead:", (leadErr as Error).message);
