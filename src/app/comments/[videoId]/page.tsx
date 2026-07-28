@@ -136,8 +136,10 @@ export default function VideoComments() {
         </div>
       </div>
 
-      <div style={{ marginBottom: "20px", padding: "12px 16px", background: "rgba(134, 104, 93, 0.1)", border: "1px solid rgba(134, 104, 93, 0.3)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)" }}>
-        💡 <strong>Modo de Resposta:</strong> Você pode responder diretamente pelo Dashboard usando o botão <em>"Responder no Dashboard"</em> (publica como Luiz Paulo Araújo) ou clicar em <em>"Ir para o Comentário"</em> para visualizar no YouTube.
+      <div style={{ marginBottom: "20px", padding: "14px 18px", background: "rgba(134, 104, 93, 0.12)", border: "1px solid rgba(134, 104, 93, 0.35)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)", lineHeight: "1.6" }}>
+        ✨ <strong>Opções de Gestão de Comentários:</strong><br />
+        • <strong>Responder no Dashboard:</strong> Escreva e publique sua resposta como <em>Luiz Paulo Araújo</em> direto por aqui, de forma instantânea.<br />
+        • <strong>Ver no YouTube (Destaque):</strong> Abre a página do vídeo destacando o comentário selecionado no topo.
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -212,7 +214,7 @@ export default function VideoComments() {
                       <textarea
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Escreva sua resposta (será publicada diretamente como Luiz Paulo Araújo)..."
+                        placeholder="Escreva sua resposta (será publicada diretamente no YouTube como Luiz Paulo Araújo)..."
                         rows={3}
                         style={{ width: "100%", padding: "8px", background: "#222", color: "#fff", border: "1px solid #444", borderRadius: "4px", fontSize: "13px" }}
                       />
@@ -238,7 +240,7 @@ export default function VideoComments() {
                   {/* Ações do comentário */}
                   <div style={{ marginTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                      {/* Botão Responder no Dashboard */}
+                      {/* Botão 1: Responder direto no Dashboard como Luiz Paulo */}
                       <button
                         className="btn btn-primary btn-sm"
                         style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
@@ -248,10 +250,10 @@ export default function VideoComments() {
                         }}
                       >
                         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        {isReplying ? "Fechar" : "Responder no Dashboard"}
+                        {isReplying ? "Fechar Resposta" : "Responder no Dashboard"}
                       </button>
 
-                      {/* Botão principal: Ir direto ao comentário no YouTube */}
+                      {/* Botão 2: Abrir no YouTube com o comentário destacado */}
                       <a 
                         href={`https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`}
                         target="_blank"
@@ -260,10 +262,10 @@ export default function VideoComments() {
                         style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                       >
                         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        Ir para o Comentário
+                        Ver no YouTube (Destaque)
                       </a>
 
-                      {/* Botão alternativo: Copiar texto */}
+                      {/* Botão 3: Copiar texto do comentário */}
                       <button 
                         className="btn btn-ghost btn-sm"
                         style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
@@ -282,7 +284,7 @@ export default function VideoComments() {
                         )}
                       </button>
 
-                      {/* Botão Excluir Comentário */}
+                      {/* Botão 4: Excluir Comentário */}
                       <button
                         className="btn btn-ghost btn-sm"
                         style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--error)", border: "1px solid rgba(239, 68, 68, 0.2)" }}
