@@ -54,12 +54,30 @@ export default function VideoComments() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId, commentId, text: replyText })
       });
+      const data = await res.json();
       if (res.ok) {
         setReplyText("");
         setReplyingToId(null);
-        await loadComments();
+        if (data.reply) {
+          setComments(prev => prev.map(c => {
+            const topId = c.snippet?.topLevelComment?.id || c.id;
+            if (topId === commentId) {
+              const existingReplies = c.replies?.comments || [];
+              return {
+                ...c,
+                localStatus: "RESPONDIDO",
+                replies: {
+                  ...c.replies,
+                  comments: [...existingReplies, data.reply]
+                }
+              };
+            }
+            return c;
+          }));
+        } else {
+          await loadComments();
+        }
       } else {
-        const data = await res.json();
         alert(data.error || "Erro ao responder comentário.");
       }
     } catch (err) {

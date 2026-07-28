@@ -8,6 +8,39 @@ export function getYouTubeClient(accessToken: string) {
 
 export const LUIZ_PAULO_CHANNEL_ID = "UCfIHSZPt-yQ5foOm7NscflQ";
 
+export async function getChannelOwnerAccessToken(): Promise<string | null> {
+  try {
+    const { prisma } = await import("./db");
+    const sysConfig = await prisma.systemConfig.findUnique({
+      where: { key: "google_refresh_token" }
+    });
+    
+    const refreshToken = sysConfig?.value;
+    if (!refreshToken) return null;
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || "",
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+        grant_type: "refresh_token",
+        refresh_token: refreshToken
+      })
+    });
+
+    if (!res.ok) {
+      console.warn("[getChannelOwnerAccessToken] Refresh token exchange failed:", res.statusText);
+      return null;
+    }
+    const data = await res.json();
+    return data.access_token || null;
+  } catch (err) {
+    console.error("[getChannelOwnerAccessToken] Error fetching token:", err);
+    return null;
+  }
+}
+
 export function isOwnerResponded(commentThread: any): boolean {
   if (!commentThread) return false;
   const replies = commentThread.replies?.comments;
