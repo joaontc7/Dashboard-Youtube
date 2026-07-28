@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       authorization: {
         params: {
-          prompt: "consent",
+          prompt: "select_account consent",
           access_type: "offline",
           response_type: "code",
           scope: "openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl",
@@ -38,23 +38,36 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         token.expiresAt = account.expires_at;
         token.refreshToken = account.refresh_token;
-        if (account.refresh_token) {
+        
+        if (account.refresh_token && account.access_token) {
           try {
-            const { prisma } = await import("./db");
-            await prisma.systemConfig.upsert({
-              where: { key: "google_refresh_token" },
-              update: { value: account.refresh_token },
-              create: { key: "google_refresh_token", value: account.refresh_token },
-            });
+            const { getYouTubeClient, LUIZ_PAULO_CHANNEL_ID } = await import("./youtube");
+            const yt = getYouTubeClient(account.access_token);
+            const res = await yt.channels.list({ part: ["snippet"], mine: true });
+            const items = res.data.items || [];
+            const isLuizPaulo = items.some(
+              item => item.id === LUIZ_PAULO_CHANNEL_ID || (item.snippet?.title || "").toLowerCase().includes("luiz paulo")
+            );
+
+            if (isLuizPaulo) {
+              const { prisma } = await import("./db");
+              await prisma.systemConfig.upsert({
+                where: { key: "google_refresh_token" },
+                update: { value: account.refresh_token },
+                create: { key: "google_refresh_token", value: account.refresh_token },
+              });
+              console.log("[NextAuth] Saved official channel refresh token for Luiz Paulo Araújo!");
+            } else {
+              console.log("[NextAuth] Token belongs to user profile", items[0]?.snippet?.title, "- skipping overwrite of channel refresh token.");
+            }
           } catch (err) {
-            console.warn("[NextAuth] Could not save refresh token to DB");
+            console.warn("[NextAuth] Could not check channel identity:", (err as Error).message);
           }
         }
         return token;
       }
 
       // If token is not expired yet, return it
-      // Google tokens expire in 1 hour. We refresh if we are within 5 minutes of expiration.
       if (token.expiresAt && Date.now() < ((token.expiresAt as number) - 5 * 60) * 1000) {
         return token;
       }
@@ -85,7 +98,7 @@ export const authOptions: NextAuthOptions = {
           ...token,
           accessToken: tokens.access_token,
           expiresAt: Math.floor(Date.now() / 1000 + tokens.expires_in),
-          refreshToken: tokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+          refreshToken: tokens.refresh_token ?? token.refreshToken,
         };
       } catch (error) {
         console.error("Error refreshing access token", error);
