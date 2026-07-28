@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
     const data = await getVideosPage(accessToken, uploadsPlaylistId, pageToken || undefined, 20);
     
-    // Try to enrich with DB statuses (optional)
+    // Default fallback if DB is unavailable
     let videosWithStatus = data.videos.map((v: any) => ({ ...v, statusBorder: "clear", localVerifiedCount: 0 }));
     
     try {
@@ -35,17 +35,19 @@ export async function GET(req: Request) {
         const vid = v.snippet?.resourceId?.videoId;
         const vStatuses = statuses.filter((s: any) => s.videoId === vid);
         const totalYoutubeComments = parseInt(v.details?.commentCount || "0");
-        const ourStatusesCount = vStatuses.length;
+        const totalTopCommentsTracked = vStatuses.length;
         const verifiedCount = vStatuses.filter((s: any) => s.status === "VERIFICADO" || s.status === "RESPONDIDO").length;
         
         let border = "clear";
         if (totalYoutubeComments > 0) {
-          if (ourStatusesCount < totalYoutubeComments) {
-            border = "red";
-          } else if (verifiedCount < totalYoutubeComments) {
-            border = "yellow";
+          if (totalTopCommentsTracked === 0) {
+            border = "red"; // Not synced yet
+          } else if (verifiedCount === totalTopCommentsTracked && totalTopCommentsTracked > 0) {
+            border = "green"; // All tracked comments are responded/verified!
+          } else if (verifiedCount > 0) {
+            border = "yellow"; // Partially responded
           } else {
-            border = "green";
+            border = "red"; // Unresponded
           }
         }
 
@@ -57,7 +59,6 @@ export async function GET(req: Request) {
       });
     } catch (dbErr) {
       console.warn("[comments/videos] DB unavailable, returning videos without statuses:", (dbErr as Error).message);
-      // Keep videosWithStatus as defaulted above (all "clear" borders)
     }
 
     return NextResponse.json({ videos: videosWithStatus, nextPageToken: data.nextPageToken });
