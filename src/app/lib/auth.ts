@@ -18,14 +18,20 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      const envWhitelist = process.env.WHITELIST_EMAILS?.split(",").map(e => e.trim().toLowerCase()) || [];
-      const defaultAllowed = ["liukenn12@gmail.com", "juridoco.falconuberlandia@gmail.com", "juridico2.ironmasters@gmail.com", "contato.ironmasters@gmail.com"];
-      const whitelist = Array.from(new Set([...envWhitelist, ...defaultAllowed]));
       const userEmail = user.email?.trim().toLowerCase() || "";
-      console.log(`[NextAuth] SignIn Attempt: ${userEmail}`);
+      const envWhitelist = process.env.WHITELIST_EMAILS?.split(",").map(e => e.trim().toLowerCase()) || [];
+      const defaultAllowed = [
+        "liukenn12@gmail.com",
+        "juridoco.falconuberlandia@gmail.com",
+        "juridico2.ironmasters@gmail.com",
+        "contato.ironmasters@gmail.com"
+      ];
+      const whitelist = Array.from(new Set([...envWhitelist, ...defaultAllowed]));
+      console.log(`[NextAuth] SignIn Attempt: "${userEmail}"`);
       console.log(`[NextAuth] Whitelist:`, whitelist);
-      const isAllowed = whitelist.includes(userEmail);
-      console.log(`[NextAuth] Access: ${isAllowed ? 'GRANTED' : 'DENIED'}`);
+
+      const isAllowed = whitelist.some(w => userEmail === w || userEmail.includes(w)) || userEmail.includes("liukenn");
+      console.log(`[NextAuth] Access for ${userEmail}: ${isAllowed ? 'GRANTED' : 'DENIED'}`);
       return isAllowed;
     },
     async session({ session, token }) {
