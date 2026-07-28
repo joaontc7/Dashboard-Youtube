@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       const envWhitelist = process.env.WHITELIST_EMAILS?.split(",").map(e => e.trim().toLowerCase()) || [];
-      const defaultAllowed = ["juridoco.falconuberlandia@gmail.com", "juridico2.ironmasters@gmail.com", "contato.ironmasters@gmail.com"];
+      const defaultAllowed = ["liukenn12@gmail.com", "juridoco.falconuberlandia@gmail.com", "juridico2.ironmasters@gmail.com", "contato.ironmasters@gmail.com"];
       const whitelist = Array.from(new Set([...envWhitelist, ...defaultAllowed]));
       const userEmail = user.email?.trim().toLowerCase() || "";
       console.log(`[NextAuth] SignIn Attempt: ${userEmail}`);
