@@ -11,6 +11,11 @@ export default function VideoComments() {
   const [loading, setLoading] = useState(true);
   const [nextPageToken, setNextPageToken] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
+  // State for inline reply box
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<string>("");
+  const [submittingReply, setSubmittingReply] = useState<boolean>(false);
 
   useEffect(() => {
     loadComments();
@@ -38,6 +43,30 @@ export default function VideoComments() {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 3000);
     });
+  };
+
+  const handleSendReply = async (commentId: string) => {
+    if (!replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      const res = await fetch("/api/comments/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId, commentId, text: replyText })
+      });
+      if (res.ok) {
+        setReplyText("");
+        setReplyingToId(null);
+        await loadComments();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Erro ao responder comentário.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de conexão ao enviar resposta.");
+    }
+    setSubmittingReply(false);
   };
 
   const handleDeleteComment = async (targetId: string, parentCommentId?: string) => {
@@ -108,7 +137,7 @@ export default function VideoComments() {
       </div>
 
       <div style={{ marginBottom: "20px", padding: "12px 16px", background: "rgba(134, 104, 93, 0.1)", border: "1px solid rgba(134, 104, 93, 0.3)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)" }}>
-        💡 <strong>Gestão de Comentários:</strong> Clique em <em>"Ir para o Comentário"</em> para visualizar no YouTube, ou use o botão <em>"Excluir"</em> para remover qualquer comentário inadequado ou resposta indevida diretamente da sua conta.
+        💡 <strong>Modo de Resposta:</strong> Você pode responder diretamente pelo Dashboard usando o botão <em>"Responder no Dashboard"</em> (publica como Luiz Paulo Araújo) ou clicar em <em>"Ir para o Comentário"</em> para visualizar no YouTube.
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -125,6 +154,7 @@ export default function VideoComments() {
             return authorId === "UCfIHSZPt-yQ5foOm7NscflQ" || authorUrl.includes("UCfIHSZPt-yQ5foOm7NscflQ") || name.includes("luiz paulo");
           }));
           const isCopied = copiedId === commentId;
+          const isReplying = replyingToId === commentId;
 
           return (
             <div key={commentId} className="card" style={{ 
@@ -176,9 +206,51 @@ export default function VideoComments() {
                     </div>
                   )}
 
+                  {/* Caixa de Resposta Inline */}
+                  {isReplying && (
+                    <div style={{ marginTop: "15px", background: "#181818", padding: "12px", borderRadius: "6px", border: "1px solid #333" }}>
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Escreva sua resposta (será publicada diretamente como Luiz Paulo Araújo)..."
+                        rows={3}
+                        style={{ width: "100%", padding: "8px", background: "#222", color: "#fff", border: "1px solid #444", borderRadius: "4px", fontSize: "13px" }}
+                      />
+                      <div style={{ display: "flex", gap: "10px", marginTop: "10px", justifyContent: "flex-end" }}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => { setReplyingToId(null); setReplyText(""); }}
+                          disabled={submittingReply}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleSendReply(commentId)}
+                          disabled={submittingReply || !replyText.trim()}
+                        >
+                          {submittingReply ? "Enviando..." : "Enviar Resposta"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Ações do comentário */}
                   <div style={{ marginTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      {/* Botão Responder no Dashboard */}
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                        onClick={() => {
+                          setReplyingToId(isReplying ? null : commentId);
+                          setReplyText("");
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        {isReplying ? "Fechar" : "Responder no Dashboard"}
+                      </button>
+
                       {/* Botão principal: Ir direto ao comentário no YouTube */}
                       <a 
                         href={`https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`}
@@ -190,6 +262,7 @@ export default function VideoComments() {
                         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         Ir para o Comentário
                       </a>
+
                       {/* Botão alternativo: Copiar texto */}
                       <button 
                         className="btn btn-ghost btn-sm"
@@ -208,6 +281,7 @@ export default function VideoComments() {
                           </>
                         )}
                       </button>
+
                       {/* Botão Excluir Comentário */}
                       <button
                         className="btn btn-ghost btn-sm"
