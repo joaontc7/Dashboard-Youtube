@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import TemplateModal from "@/app/components/TemplateModal";
 
 export default function VideoComments() {
   const params = useParams();
@@ -17,8 +18,13 @@ export default function VideoComments() {
   const [replyText, setReplyText] = useState<string>("");
   const [submittingReply, setSubmittingReply] = useState<boolean>(false);
 
+  // State for Templates
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+
   useEffect(() => {
     loadComments();
+    loadTemplates();
   }, [videoId]);
 
   const loadComments = async (token?: string) => {
@@ -34,6 +40,17 @@ export default function VideoComments() {
       console.error(e);
     }
     setLoading(false);
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const res = await fetch("/api/templates");
+      if (res.ok) {
+        setTemplates(await res.json());
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -156,7 +173,7 @@ export default function VideoComments() {
 
       <div style={{ marginBottom: "20px", padding: "14px 18px", background: "rgba(134, 104, 93, 0.12)", border: "1px solid rgba(134, 104, 93, 0.35)", borderRadius: "8px", fontSize: "13px", color: "var(--accent-light)", lineHeight: "1.6" }}>
         ✨ <strong>Opções de Gestão de Comentários:</strong><br />
-        • <strong>Responder no Dashboard:</strong> Escreva e publique sua resposta como <em>Luiz Paulo Araújo</em> direto por aqui, de forma instantânea.<br />
+        • <strong>Responder no Dashboard:</strong> Escreva e publique sua resposta como <em>Luiz Paulo Araújo</em> direto por aqui, com suporte a templates rápidos.<br />
         • <strong>Ver no YouTube (Destaque):</strong> Abre a página do vídeo destacando o comentário selecionado no topo.
       </div>
 
@@ -228,14 +245,49 @@ export default function VideoComments() {
 
                   {/* Caixa de Resposta Inline */}
                   {isReplying && (
-                    <div style={{ marginTop: "15px", background: "#181818", padding: "12px", borderRadius: "6px", border: "1px solid #333" }}>
+                    <div style={{ marginTop: "15px", background: "#181818", padding: "14px", borderRadius: "6px", border: "1px solid #333" }}>
+                      {/* Barra de Ações Rápidas de Template */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                        <span style={{ fontSize: "12px", color: "var(--accent-light)", fontWeight: "500" }}>📝 Resposta Rápida:</span>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                setReplyText(prev => prev ? `${prev}\n${e.target.value}` : e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                            style={{ padding: "5px 10px", background: "#222", color: "#fff", border: "1px solid #444", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
+                          >
+                            <option value="">⚡ Inserir Template Salvo...</option>
+                            {templates.map((t: any) => (
+                              <option key={t.id} value={t.content}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: "12px", padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: "5px" }}
+                            onClick={() => setIsTemplateModalOpen(true)}
+                            title="Criar, editar ou gerenciar templates de resposta"
+                          >
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Criar / Editar Templates
+                          </button>
+                        </div>
+                      </div>
+
                       <textarea
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Escreva sua resposta (será publicada diretamente no YouTube como Luiz Paulo Araújo)..."
-                        rows={3}
-                        style={{ width: "100%", padding: "8px", background: "#222", color: "#fff", border: "1px solid #444", borderRadius: "4px", fontSize: "13px" }}
+                        placeholder="Escreva sua resposta ou insira um template acima (será publicada no YouTube como Luiz Paulo Araújo)..."
+                        rows={4}
+                        style={{ width: "100%", padding: "10px", background: "#222", color: "#fff", border: "1px solid #444", borderRadius: "4px", fontSize: "13px", lineHeight: "1.5" }}
                       />
+
                       <div style={{ display: "flex", gap: "10px", marginTop: "10px", justifyContent: "flex-end" }}>
                         <button
                           className="btn btn-ghost btn-sm"
@@ -331,6 +383,15 @@ export default function VideoComments() {
           </div>
         )}
       </div>
+
+      {/* Modal para criar/editar templates */}
+      <TemplateModal 
+        isOpen={isTemplateModalOpen} 
+        onClose={() => {
+          setIsTemplateModalOpen(false);
+          loadTemplates();
+        }} 
+      />
     </div>
   );
 }
